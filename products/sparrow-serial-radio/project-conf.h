@@ -96,7 +96,7 @@
 #define NBR_TABLE_CONF_MAX_NEIGHBORS     1
 
 #undef QUEUEBUF_CONF_NUM
-#define QUEUEBUF_CONF_NUM                4
+#define QUEUEBUF_CONF_NUM                32
 
 #undef UIP_CONF_BUFFER_SIZE
 #define UIP_CONF_BUFFER_SIZE          1280
@@ -109,7 +109,7 @@
 
 /* configuration for the serial radio/network driver */
 #undef NETSTACK_CONF_MAC
-#define NETSTACK_CONF_MAC     nullmac_driver
+#define NETSTACK_CONF_MAC     csma_driver
 
 #undef NETSTACK_CONF_RDC
 #define NETSTACK_CONF_RDC     sniffer_rdc_driver
@@ -119,6 +119,17 @@
 
 #undef NETSTACK_CONF_FRAMER
 #define NETSTACK_CONF_FRAMER  no_framer
+
+#define SNIFFER_RDC_CONF_DRIVER contikimac_driver
+
+/* #undef NETSTACK_CONF_USING_QUEUEBUF */
+/* #define NETSTACK_CONF_USING_QUEUEBUF 1 */
+
+#define NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE    16
+#undef SICSLOWPAN_CONF_COMPRESSION_THRESHOLD
+#define SICSLOWPAN_CONF_COMPRESSION_THRESHOLD 0
+#define RDC_CONF_HARDWARE_ACK 1
+#define RDC_CONF_HARDWARE_CSMA 0
 
 /*
  * OAM definitions

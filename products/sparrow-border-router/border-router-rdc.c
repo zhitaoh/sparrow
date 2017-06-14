@@ -77,24 +77,24 @@ struct tx_callback {
 
 static struct tx_callback callbacks[MAX_CALLBACKS];
 /*---------------------------------------------------------------------------*/
-static const char *
-get_frame_type(uint16_t type)
-{
-  switch(type) {
-  case FRAME802154_BEACONFRAME:
-    return "BEACON";
-  case FRAME802154_DATAFRAME:
-    return "DATA";
-  case FRAME802154_ACKFRAME:
-    return "ACK";
-  case FRAME802154_CMDFRAME:
-    return "CMD";
-  case FRAME802154_BEACONREQ:
-    return "BEACONREQ";
-  default:
-    return "-";
-  }
-}
+/* static const char * */
+/* get_frame_type(uint16_t type) */
+/* { */
+/*   switch(type) { */
+/*   case FRAME802154_BEACONFRAME: */
+/*     return "BEACON"; */
+/*   case FRAME802154_DATAFRAME: */
+/*     return "DATA"; */
+/*   case FRAME802154_ACKFRAME: */
+/*     return "ACK"; */
+/*   case FRAME802154_CMDFRAME: */
+/*     return "CMD"; */
+/*   case FRAME802154_BEACONREQ: */
+/*     return "BEACONREQ"; */
+/*   default: */
+/*     return "-"; */
+/*   } */
+/* } */
 /*---------------------------------------------------------------------------*/
 static const char *
 get_tx_status(int status)
@@ -150,11 +150,13 @@ packet_sent(uint8_t sessionid, uint8_t status, uint8_t tx)
       YLOG_DEBUG("*** callback to unused entry %u\n", sessionid);
     }
     if(log_tx) {
-      YLOG_PRINT("[TX %3d] %-9s ",
+      YLOG_PRINT("[=> %3d] %-5s %1d ",
                  callback->len,
-                 get_frame_type(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE)));
+                 get_tx_status(status),
+                 tx);
       net_debug_lladdr_print((uip_lladdr_t *)packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
-      PRINTA(" %3d tx   %s\n", tx, get_tx_status(status));
+      PRINTA("\n");
+      /* PRINTA(" %3d tx   %s\n", tx, get_tx_status(status)); */
     }
     callback->len = 0;
     mac_call_sent_callback(callback->cback, callback->ptr, status, tx);
@@ -274,13 +276,13 @@ packet_input(void)
     YLOG_DEBUG("RECV %u\n", packetbuf_datalen());
 
     if(log_rx) {
-      YLOG_PRINT("[RX %3d] %-9s %u ",
+      YLOG_PRINT("[<- %3d] %d dBm ",
              packetbuf_datalen(),
-             get_frame_type(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE)),
-             packetbuf_attr(PACKETBUF_ATTR_TIMESTAMP));
-      net_debug_lladdr_print((uip_lladdr_t *)packetbuf_addr(PACKETBUF_ADDR_SENDER));
-      PRINTA(" %d dBm\n",
              (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI));
+      net_debug_lladdr_print((uip_lladdr_t *)packetbuf_addr(PACKETBUF_ADDR_SENDER));
+      PRINTA("\n");
+      /* PRINTA(" %d dBm\n", */
+      /*        (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI)); */
     }
 
     NETSTACK_MAC.input();
