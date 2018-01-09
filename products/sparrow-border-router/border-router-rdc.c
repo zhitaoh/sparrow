@@ -41,6 +41,7 @@
 #include "net/queuebuf.h"
 #include "net/netstack.h"
 #include "net/mac/frame802154.h"
+#include "dev/radio.h"
 #include "packetutils.h"
 #include "border-router.h"
 #include "border-router-rdc.h"
@@ -77,24 +78,24 @@ struct tx_callback {
 
 static struct tx_callback callbacks[MAX_CALLBACKS];
 /*---------------------------------------------------------------------------*/
-/* static const char * */
-/* get_frame_type(uint16_t type) */
-/* { */
-/*   switch(type) { */
-/*   case FRAME802154_BEACONFRAME: */
-/*     return "BEACON"; */
-/*   case FRAME802154_DATAFRAME: */
-/*     return "DATA"; */
-/*   case FRAME802154_ACKFRAME: */
-/*     return "ACK"; */
-/*   case FRAME802154_CMDFRAME: */
-/*     return "CMD"; */
-/*   case FRAME802154_BEACONREQ: */
-/*     return "BEACONREQ"; */
-/*   default: */
-/*     return "-"; */
-/*   } */
-/* } */
+static const char *
+get_frame_type(uint16_t type)
+{
+  switch(type) {
+  case FRAME802154_BEACONFRAME:
+    return "BEACON";
+  case FRAME802154_DATAFRAME:
+    return "DATA";
+  case FRAME802154_ACKFRAME:
+    return "ACK";
+  case FRAME802154_CMDFRAME:
+    return "CMD";
+  case FRAME802154_BEACONREQ:
+    return "BREQ";
+  default:
+    return "-";
+  }
+}
 /*---------------------------------------------------------------------------*/
 static const char *
 get_tx_status(int status)
@@ -103,15 +104,15 @@ get_tx_status(int status)
   case MAC_TX_OK:
     return "OK";
   case MAC_TX_COLLISION:
-    return "COLLISION";
+    return "COLL";
   case MAC_TX_NOACK:
     return "NOACK";
   case MAC_TX_DEFERRED:
-    return "DEFERRED";
+    return "DEF";
   case MAC_TX_ERR:
     return "ERR";
   case MAC_TX_ERR_FATAL:
-    return "ERR FATAL";
+    return "FATAL";
   default:
     return "-";
   }
@@ -259,6 +260,8 @@ static void
 packet_input(void)
 {
   int ret;
+  uint16_t recv_time;
+  uint16_t recv_len;
 
   if(drop_all) {
     /* Drop all packets */
@@ -266,9 +269,23 @@ packet_input(void)
     return;
   }
 
+  recv_len = packetbuf_datalen();
   ret = NETSTACK_FRAMER.parse();
   if(ret == FRAMER_FRAME_HANDLED) {
     /* Packet has already been handled by the framer */
+    if(log_rx) {
+      YLOG_PRINT("[FRX%3d] %-6s [", recv_len,
+             get_frame_type(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE)));
+      net_debug_lladdr_print((uip_lladdr_t *)packetbuf_addr(PACKETBUF_ADDR_SENDER));
+      PRINTA("]%4d dBm", (int8_t)packetbuf_attr(PACKETBUF_ATTR_RSSI));
+      recv_time = (uint16_t)(get_sr_time() & 0xffff) -
+        packetbuf_attr(PACKETBUF_ATTR_TIMESTAMP);
+      if(recv_time < 0x7fff) {
+        PRINTA(" %10u msec ago\n", recv_time);
+      } else {
+        PRINTA("\n");
+      }
+    }
   } else if(ret < 0) {
     YLOG_DEBUG("failed to parse frame %d (%u bytes)\n",
                ret, packetbuf_datalen());
